@@ -547,7 +547,7 @@ function shuffleRecord() {
 function openTidal() {
   if (!currentRecord) { alert('Select a record first!'); return; }
   const q = encodeURIComponent(currentRecord.artist + ' ' + currentRecord.title);
-  const url = 'https://tidal.com/browse/search/' + q;
+  const url = 'https://listen.tidal.com/search/albums?q=' + q;
   const btn = document.getElementById('btnTidal');
   btn.classList.add('down');
   setTimeout(() => btn.classList.remove('down'), 200);
