@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VinylVault — Your Record Collection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0f0b05;
+  color: #e8d5a3;
+  font-family: 'IBM Plex Mono', monospace;
+  min-height: 100vh;
+}
+.cabinet {
+  max-width: 900px;
+  margin: 24px auto;
+  background: linear-gradient(160deg, #2e1f0a 0%, #1a1208 50%, #0f0b05 100%);
+  border: 3px solid #5c3d1a;
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.6), 0 8px 40px rgba(0,0,0,0.9);
+  position: relative;
+}
+.cabinet::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid #3d2710;
+  border-radius: 8px;
+  pointer-events: none;
+}
+.brand {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #3d2710;
+}
+.brand-name {
+  font-family: 'Special Elite', cursive;
+  font-size: 32px;
+  color: #c8962a;
+  letter-spacing: 8px;
+  text-shadow: 0 0 30px rgba(200,150,42,0.2);
+}
+.brand-sub {
+  font-size: 10px;
+  color: #6a4c1e;
+  letter-spacing: 4px;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+.player-grid {
+  display: grid;
+  grid-template-columns: 290px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+.turntable-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.platter-base {
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle at 40% 30%, #1a1a1a, #0a0a0a);
+  border-radius: 50%;
+  border: 4px solid #222;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.9), inset 0 2px 6px rgba(255,255,255,0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.record {
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  background: 
+    repeating-conic-gradient(#111 0deg 3deg, #181818 3deg 6deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: transform 0.3s;
+}
+.record.spinning {
+  animation: spin 2.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.record-label {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 8px;
+  background: #8B1A1A;
+  transition: background 0.5s;
+  position: relative;
+  z-index: 2;
+}
+.label-title {
+  font-family: 'Special Elite', cursive;
+  font-size: 7.5px;
+  color: #f5e6c8;
+  line-height: 1.25;
+  max-width: 58px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+.label-artist {
+  font-size: 6px;
+  color: #d4b896;
+  margin-top: 3px;
+  max-width: 58px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.spindle {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  background: #999;
+  border-radius: 50%;
+  border: 1px solid #666;
+  z-index: 3;
+}
+/* Tonearm */
+.tonearm-wrap {
+  position: absolute;
+  top: -8px;
+  right: -18px;
+  width: 70px;
+  height: 110px;
+}
+.tonearm-pivot {
+  position: absolute;
+  top: 0; right: 12px;
+  width: 16px; height: 16px;
+  background: radial-gradient(circle at 40% 35%, #ccc, #888);
+  border-radius: 50%;
+  border: 2px solid #666;
+}
+.tonearm-arm {
+  position: absolute;
+  top: 6px; right: 18px;
+  width: 7px; height: 95px;
+  background: linear-gradient(180deg, #aaa 0%, #ccc 40%, #888 100%);
+  border-radius: 3px;
+  transform-origin: 3.5px 6px;
+  transform: rotate(22deg);
+  transition: transform 0.9s ease;
+}
+.tonearm-arm.playing { transform: rotate(33deg); }
+.tonearm-head {
+  position: absolute;
+  bottom: 0; left: -3px;
+  width: 13px; height: 8px;
+  background: #aaa;
+  border-radius: 2px;
+}
+/* Now playing panel */
+.now-playing {
+  background: #0a0803;
+  border: 1px solid #2e1a08;
+  border-radius: 6px;
+  padding: 14px;
+  width: 100%;
+}
+.np-led {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #3d2710;
+  margin-right: 6px;
+  vertical-align: middle;
+  transition: background 0.3s;
+}
+.np-led.on { background: #c84a2a; box-shadow: 0 0 6px #c84a2a; }
+.np-eyebrow {
+  font-size: 9px;
+  color: #5c3d1a;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.np-title {
+  font-family: 'Special Elite', cursive;
+  font-size: 17px;
+  color: #e8b84a;
+  line-height: 1.25;
+  min-height: 44px;
+}
+.np-artist {
+  font-size: 11px;
+  color: #a07840;
+  margin-top: 4px;
+}
+.np-meta {
+  font-size: 10px;
+  color: #4a3018;
+  margin-top: 4px;
+}
+/* Controls */
+.controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+}
+.btn {
+  background: #130e06;
+  border: 2px solid #5c3d1a;
+  border-radius: 5px;
+  color: #c8962a;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  padding: 9px 14px;
+  cursor: pointer;
+  text-transform: uppercase;
+  box-shadow: 0 3px 0 #3d2710;
+  position: relative;
+  top: 0;
+  transition: top 0.08s, box-shadow 0.08s, background 0.1s;
+  user-select: none;
+}
+.btn:hover { background: #1e1408; color: #e8b84a; }
+.btn:active, .btn.down {
+  top: 3px;
+  box-shadow: 0 0 0 #3d2710;
+  background: #0a0803;
+}
+.btn-play { border-color: #3a6e1a; color: #7ec84a; }
+.btn-play:hover { background: #0f1a05; color: #9ee86a; }
+.btn-play.down { color: #5ab832; }
+.btn-tidal {
+  flex: 1;
+  background: #070e18;
+  border-color: #1a3f6e;
+  color: #4ab8e8;
+  text-align: center;
+}
+.btn-tidal:hover { background: #0a1828; color: #6ae8ff; }
+.btn-shuffle {
+  background: #130e06;
+  border-color: #5c3d1a;
+  color: #c8962a;
+}
+.btn-shuffle:hover { background: #1e1408; color: #e8b84a; }
+.btn-shuffle.spin-once { animation: shuffleSpin 0.35s ease; }
+@keyframes shuffleSpin {
+  0%   { transform: rotate(0deg) scale(1); }
+  40%  { transform: rotate(180deg) scale(1.12); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+/* VU meter */
+.vu {
+  display: flex;
+  gap: 2px;
+  align-items: flex-end;
+  height: 28px;
+}
+.vu-b {
+  width: 4px;
+  background: #2a1a08;
+  border-radius: 1px;
+  transition: height 0.08s;
+}
+/* Ticker */
+.ticker {
+  width: 100%;
+  background: #080604;
+  border: 1px solid #2a1a08;
+  border-radius: 4px;
+  padding: 7px 10px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.ticker-inner {
+  display: inline-block;
+  font-size: 10px;
+  color: #5c3d1a;
+  letter-spacing: 1px;
+  animation: ticker 35s linear infinite;
+}
+@keyframes ticker {
+  from { transform: translateX(320px); }
+  to { transform: translateX(-100%); }
+}
+/* Library side */
+.library { display: flex; flex-direction: column; gap: 10px; }
+.search-row { display: flex; gap: 8px; }
+.search-input {
+  flex: 1;
+  background: #0a0803;
+  border: 1px solid #3d2710;
+  border-radius: 4px;
+  color: #e8d5a3;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  padding: 8px 12px;
+  outline: none;
+}
+.search-input:focus { border-color: #7a5c2e; }
+.search-input::placeholder { color: #3d2710; }
+.sort-select {
+  background: #0a0803;
+  border: 1px solid #3d2710;
+  border-radius: 4px;
+  color: #a07840;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  padding: 8px 10px;
+  outline: none;
+  cursor: pointer;
+}
+.rec-count {
+  font-size: 10px;
+  color: #4a3018;
+  letter-spacing: 1px;
+}
+.record-list {
+  border: 1px solid #1e1208;
+  border-radius: 4px;
+  overflow-y: auto;
+  max-height: 360px;
+}
+.record-list::-webkit-scrollbar { width: 5px; }
+.record-list::-webkit-scrollbar-track { background: #0a0803; }
+.record-list::-webkit-scrollbar-thumb { background: #2e1a08; border-radius: 3px; }
+.rrow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #120d06;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.rrow:last-child { border-bottom: none; }
+.rrow:hover { background: #180f06; }
+.rrow.active { background: #221508; }
+.rrow-info {}
+.rrow-title { font-size: 12px; color: #e0c88a; line-height: 1.3; }
+.rrow-artist { font-size: 10px; color: #6a4c1e; }
+.rrow-year { font-size: 10px; color: #3d2710; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="cabinet">
+  <div class="brand">
+    <div class="brand-name">VINYLVAULT</div>
+    <div class="brand-sub">High Fidelity Record Library &middot; 696 Albums</div>
+  </div>
+
+  <div class="player-grid">
+    <!-- Left: Turntable -->
+    <div class="turntable-col">
+      <div class="platter-base">
+        <div class="record" id="record">
+          <div class="record-label" id="recordLabel">
+            <div class="label-title" id="labelTitle">SELECT A RECORD</div>
+            <div class="label-artist" id="labelArtist"></div>
+          </div>
+          <div class="spindle"></div>
+        </div>
+        <div class="tonearm-wrap">
+          <div class="tonearm-pivot"></div>
+          <div class="tonearm-arm" id="tonearm">
+            <div class="tonearm-head"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="now-playing">
+        <div class="np-eyebrow"><span class="np-led" id="npLed"></span>Now selected</div>
+        <div class="np-title" id="npTitle">—</div>
+        <div class="np-artist" id="npArtist"></div>
+        <div class="np-meta" id="npMeta"></div>
+      </div>
+
+      <div class="controls">
+        <button class="btn btn-play" id="btnPlay" onclick="togglePlay()">&#9654; Play</button>
+        <button class="btn btn-shuffle" id="btnShuffle" onclick="shuffleRecord()" title="Random record">&#8635;</button>
+        <div class="vu" id="vu">
+          <div class="vu-b" style="height:6px"></div>
+          <div class="vu-b" style="height:12px"></div>
+          <div class="vu-b" style="height:8px"></div>
+          <div class="vu-b" style="height:18px"></div>
+          <div class="vu-b" style="height:10px"></div>
+          <div class="vu-b" style="height:20px"></div>
+          <div class="vu-b" style="height:7px"></div>
+          <div class="vu-b" style="height:15px"></div>
+        </div>
+      </div>
+
+      <button class="btn btn-tidal" id="btnTidal" onclick="openTidal()" style="width:100%; padding:11px;">
+        &#9651; Open in TIDAL
+      </button>
+
+      <div class="ticker">
+        <span class="ticker-inner" id="tickerText">
+          VINYLVAULT &middot; YOUR COLLECTION &middot; 696 RECORDS &middot; SELECT A RECORD TO BEGIN &middot;
+        </span>
+      </div>
+    </div>
+
+    <!-- Right: Library -->
+    <div class="library">
+      <div class="search-row">
+        <input class="search-input" type="text" placeholder="search artist or title..." id="searchInput" oninput="filterRecords()">
+        <select class="sort-select" id="sortSel" onchange="filterRecords()">
+          <option value="artist">A–Z artist</option>
+          <option value="title">A–Z title</option>
+          <option value="year">by year</option>
+        </select>
+      </div>
+      <div class="rec-count" id="recCount">696 records</div>
+      <div class="record-list" id="recordList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const RECORDS = [{"artist":"40 Watt Sun","title":"Perfect Light","label":"Svart","year":"2022"},{"artist":"Alcest","title":"Kodama","label":"Prophecy","year":"2016"},{"artist":"Alcest","title":"Ecailes De Lune","label":"Prophecy","year":"2017"},{"artist":"AMENRA","title":"DE DOORN","label":"Relapse","year":"2021"},{"artist":"Animal Collective","title":"Merriweather Post Pavilion","label":"Domino","year":"2009"},{"artist":"Appleseed Cast, The","title":"Peregrine","label":"The Militia Group","year":"2006"},{"artist":"Arete","title":"Hymnal","label":"The Fear and The Void Recordings","year":"2018"},{"artist":"Asunojokei","title":"Wishes","label":"Dog Knights","year":"2020"},{"artist":"Baroness","title":"Live at Maida Vale - Vol II","label":"Abraxan Hymns","year":"2020"},{"artist":"Baroness","title":"Gold and Grey","label":"Abraxan Hymns","year":"2019"},{"artist":"Baroness","title":"Purple","label":"Abraxan Hymns","year":"2015"},{"artist":"Baroness","title":"Stone","label":"Abraxan Hymns","year":"2023"},{"artist":"Beths, The","title":"Expert in a Dying Field","label":"Carpark Records","year":"2022"},{"artist":"Bird, Andrew","title":"Armchair Apocrypha","label":"Fat Possum","year":"2008"},{"artist":"Bird, Andrew","title":"Noble Beast","label":"Fantasy","year":"2009"},{"artist":"Birds in Row","title":"We Already Lost the World","label":"Deathwish","year":"2018"},{"artist":"Blake, James","title":"Overgrown","label":"Republic","year":"2013"},{"artist":"Blindside","title":"A Thought Crushed My Mind","label":"WASA Recordings","year":""},{"artist":"Bluey","title":"Bluey: The Album","label":"Demon Music","year":"2021"},{"artist":"Bon Iver","title":"For Emma, Forever Ago","label":"JAGJAGUWAR","year":"2008"},{"artist":"Bon Iver","title":"Bon Iver, Bon Iver","label":"JAGJAGUWAR","year":"2011"},{"artist":"Boneflower","title":"Armour","label":"Dog Knights","year":"2020"},{"artist":"Boneflower","title":"Reveries","label":"Deathwish","year":"2025"},{"artist":"Boyz II Men","title":"Legacy: The Greatest Hits Collection","label":"Motown","year":"2001"},{"artist":"Bridges, Leon","title":"Coming Home","label":"Columbia","year":"2015"},{"artist":"Bright Eyes","title":"Four Winds EP","label":"Saddle Creek","year":"2007"},{"artist":"BRUIT","title":"The Machine is Burning and Everyone Knows it Could Happen Again","label":"Pelagic","year":"2022"},{"artist":"BRUIT","title":"The Age of Ephemerality","label":"Pelagic","year":"2025"},{"artist":"Brutus","title":"Unison Life","label":"Sargent House/Hassle","year":"2022"},{"artist":"Brutus","title":"Nest","label":"Sargeant House","year":"2019"},{"artist":"Carey, S","title":"All We Grow","label":"JAGJAGUWAR","year":"2010"},{"artist":"Caspian","title":"The Four Trees","label":"The Mylene Sheath","year":"2007"},{"artist":"Caspian","title":"Dust and Disquiet","label":"Triple Crown Records","year":"2015"},{"artist":"Cave In","title":"Heavy Pendelum","label":"Relapse","year":"2022"},{"artist":"Chalk Hands","title":"Don\u2019t Think About Death","label":"","year":""},{"artist":"Chalk Hands","title":"The Line that Shapes the Coast of US","label":"Dog Knights","year":"2026"},{"artist":"Churches","title":"Every Open Eye","label":"Goodbye Records","year":"2015"},{"artist":"Coheed and Cambria","title":"Second Stage Wind Turbine","label":"Equal Vision Records","year":"2023"},{"artist":"Coheed and Cambria","title":"In Keeping Secrets of Silent Earth","label":"Equal Vision Records","year":"2023"},{"artist":"Coheed and Cambria","title":"Vaxis II: A Window of the Waking Mind","label":"Roadrunner Records","year":"2022"},{"artist":"Copeland","title":"Beneath Medicine Tree","label":"Smartpunk Records","year":"2023"},{"artist":"Counterparts","title":"A Eulogy for Those Still Here","label":"Pure Noise","year":"2022"},{"artist":"Conjurer","title":"Unself","label":"Nuclear Blast","year":"2025"},{"artist":"Conjurer","title":"Pathos","label":"Nuclear Blast","year":"2022"},{"artist":"Converge","title":"Blood Moon","label":"Deathwish/Epitaph","year":"2022"},{"artist":"Converge","title":"Love is Not Enough","label":"Deathwish","year":"2026"},{"artist":"Converge","title":"Axe to Fall","label":"Deathwish/Epitaph","year":"2023"},{"artist":"Circle Takes the Square","title":"As the Roots Uno","label":"Gatepost Recordings","year":"2024"},{"artist":"Cult of Luna","title":"Mariner","label":"Indie Recordings","year":"2023"},{"artist":"Cult of Luna","title":"The Long Road North","label":"Metal Blade","year":"2022"},{"artist":"Cult of Luna","title":"The Raging River","label":"Red Creek Records","year":"2020"},{"artist":"Daitro","title":"Laisser Vivre Les Squelettes","label":"Echo Canyon","year":"2023"},{"artist":"Deafheaven","title":"Sunbather","label":"Sargeant House","year":"2020"},{"artist":"Deafheaven","title":"Ordinary Corrupt Human Love","label":"ANTI","year":"2018"},{"artist":"Deafheaven","title":"10 Years Gone","label":"Deathwish","year":"2013"},{"artist":"Deafheaven","title":"New Bermuda","label":"ANTI/Deathwish","year":"2015"},{"artist":"Deafheaven","title":"Lonely People With Power","label":"Roadrunner Records","year":"2025"},{"artist":"Decemberists, The","title":"The King is Dead","label":"Capitol","year":"2011"},{"artist":"Decemberists, The","title":"The Crane Wife","label":"Capitol","year":"2006"},{"artist":"Defeater","title":"Defeater","label":"Epitaph","year":"2019"},{"artist":"Der Weg Einer Freiheit","title":"Noctvrn","label":"Season of Mist","year":"2021"},{"artist":"Do Make Say Think","title":"You, You\u2019re a History in Rust","label":"Constellation","year":"2007"},{"artist":"Dodos, The","title":"Time to Die","label":"Frenchkis","year":"2009"},{"artist":"Dogwood","title":"Building a Better Me","label":"Tooth and Nail","year":"2024"},{"artist":"Drake, Nick","title":"Pink Moon","label":"Island","year":"2013"},{"artist":"Dying Wish","title":"Symptoms of Survival","label":"Sharp Tone","year":"2023"},{"artist":"Earle, Steve and The Dukes","title":"Ghosts of West Virginia","label":"New West","year":"2020"},{"artist":"Edwards, Kathleen","title":"Total Freedom","label":"Dualtone","year":"2020"},{"artist":"Ekko Astral","title":"Pink Balloons","label":"Top Shelf Records","year":"2025"},{"artist":"Embodyment","title":"Hold Your Breath","label":"One Day Savior/Solid State","year":"2001"},{"artist":"END","title":"Splinters from an Ever-Changing Face","label":"Closed Casket Activities","year":"2020"},{"artist":"Ester Drang","title":"Pleasure Themes and Get Rich Schemes","label":"Burnt Toast Vinyl","year":"2004"},{"artist":"Every Time I Die","title":"Radical","label":"Epitaph","year":"2021"},{"artist":"Explosions in the Sky","title":"The Wilderness","label":"Temporary Residence","year":"2016"},{"artist":"Explosions in the Sky","title":"All of a Sudden I Miss Everyone","label":"Temporary Residence","year":"2006"},{"artist":"Explosions in the Sky","title":"The Earth is Not a Cold Dead Place","label":"Temporary Residence","year":"2016"},{"artist":"Explosions in the Sky","title":"Those Who Tell the Truth Shall Die, Those Who Tell the Truth Shall Live Forever","label":"Temporary Residence","year":"2001"},{"artist":"Explosions in the Sky","title":"Take Care, Take Care, Take Care","label":"Temporary Residence","year":"2011"},{"artist":"Explosions in the Sky","title":"END","label":"Temporary Residence","year":"2023"},{"artist":"Felix Culpa, The","title":"Sever Your Roots","label":"Youth Conspiracy Records","year":"2009"},{"artist":"Flaming Lips, The","title":"The Terror","label":"Warner Bros.","year":"2013"},{"artist":"Flaming Lips, The","title":"Embryonic","label":"Warner Bros.","year":"2009"},{"artist":"Flaming Lips, The","title":"The Soft Bulletin - Recorded at Red Rocks","label":"Warner Bros.","year":"2019"},{"artist":"Frail Body","title":"A Brief Memorium","label":"Deathwish","year":"2019"},{"artist":"Frail Body","title":"Artificial Bouquet","label":"Deathwish","year":"2024"},{"artist":"Franz Ferdinand","title":"You Could Have It So Much Better","label":"Domino","year":"2005"},{"artist":"Further Seems Forever","title":"The Moon is Down","label":"Tooth and Nail","year":"2022"},{"artist":"Further Seems Forever","title":"How to Start a Fire","label":"","year":"2023"},{"artist":"Godspeed you Black Emperor","title":"Lift your Skinny Fists like Antennas to Heaven","label":"Constellation","year":"2001"},{"artist":"Godspeed you Black Emperor","title":"No Title as of 13 February 2024 28,340 Dead","label":"Constellation","year":"2025"},{"artist":"Gonzalez, Jose","title":"Local Valley","label":"Imperial Recordings","year":"2021"},{"artist":"Great Lake Swimmers","title":"Lost Channels","label":"Network Productions","year":"2009"},{"artist":"Holy Fawn","title":"Death Spells","label":"Triple Crown Records","year":"2021"},{"artist":"Holy Fawn","title":"Dimensional Bleed","label":"Wax Bodega","year":"2022"},{"artist":"Hopesfall","title":"The Satellite Years","label":"Equal Vision Records","year":"2023"},{"artist":"HUM","title":"You\u2019d Prefer an Astronaut","label":"Earth Analog Records","year":"2023"},{"artist":"Gregory Alan Isokov","title":"Evening Machines","label":"Suitcase Town Music","year":"2018"},{"artist":"Infant Island","title":"Obsidian Wreath","label":"Secret Voice","year":"2023"},{"artist":"Iron and Wine","title":"The Creek Drank the Cradle","label":"Sub Pop","year":"2002"},{"artist":"JFDR","title":"Brazil","label":"White Sun Records","year":"2016"},{"artist":"Knocked Loose","title":"You Won\u2019t Go Before You\u2019re Supposed To","label":"Pure Noise","year":"2024"},{"artist":"Lil\u2019 Bub","title":"Science and Magic","label":"Joyful Noise","year":"2015"},{"artist":"Mae","title":"Destination Beautiful","label":"Equal Vision Records","year":"2023"},{"artist":"Mates of State","title":"Bring it Back","label":"Polyvinyl","year":"2005"},{"artist":"Mates of State","title":"Rearrange Us","label":"Barsuk","year":"2008"},{"artist":"Metallica","title":"72 Seasons","label":"Blackened Recordings","year":"2023"},{"artist":"Mercury Program, The, & Maserati","title":"Confines of Heat: Split EP","label":"Hello Sir","year":"2005"},{"artist":"mewithoutYou","title":"A:B Life","label":"","year":""},{"artist":"mewithoutYou","title":"[untitled]","label":"Run for Cover","year":"2018"},{"artist":"mewithoutYou","title":"Brother, Sister","label":"Burnt Toast Vinyl","year":"2006"},{"artist":"mewithoutYou","title":"Pale Horses","label":"Run for Cover","year":"2015"},{"artist":"mewithoutYou","title":"Catch for Us the Foxes","label":"Tooth and Nail","year":"2021"},{"artist":"mewithoutYou","title":"Ten Stories","label":"Pine Street Records","year":"2012"},{"artist":"mewithoutYou","title":"Its All Crazy! It\u2019s All False! It\u2019s All a Dream, It\u2019s Alright","label":"Tooth and Nail","year":"2009"},{"artist":"mewithoutYou","title":"Appendix EP","label":"","year":""},{"artist":"Mew","title":"And the Glass Handed Kites","label":"Music on Vinyl","year":"2020"},{"artist":"Mew","title":"Visuals","label":"Play it Again Sam","year":"2017"},{"artist":"Mew","title":"Frengers","label":"Music on Vinyl","year":"2023"},{"artist":"Mogwai","title":"Every Country\u2019s Sun","label":"Rock Action/Temporary Residence Records","year":"2017"},{"artist":"Mogwai","title":"As the Love Continues","label":"Rock Action/Temporary Residence Records","year":"2021"},{"artist":"Mogwai","title":"KIN","label":"Temporary Residence","year":"2018"},{"artist":"Mogwai","title":"The Hawk is Howling","label":"[PIAS] Recordings","year":"2023"},{"artist":"Mogwai","title":"The Bad Fire","label":"Temporary Residence","year":"2025"},{"artist":"M\u00d8L","title":"Jord","label":"Holy Roar","year":"2018"},{"artist":"M\u00d8L","title":"Jord (Instrumental)","label":"Holy Roar","year":"2018"},{"artist":"M\u00d8L","title":"Diorama","label":"Nuclear Blast","year":"2021"},{"artist":"Mono","title":"You Are There","label":"Temporary Residence","year":"2006"},{"artist":"Mono","title":"Pilgramage of the Soul","label":"Temporary Residence","year":"2021"},{"artist":"Murder by Death","title":"Who Will Survive, and What Will Be Left of Them?","label":"Self - Distributed","year":""},{"artist":"Norma Jean","title":"Bless the Martyr and Kiss the Child","label":"UnoriginalVinyl","year":"2022"},{"artist":"Nuvolascura","title":"As We Suffer from Memory and Imagination","label":"Zegema Beach Records","year":"2020"},{"artist":"Nuvolascura","title":"Nuvolascura","label":"Zegema Beach Records","year":"2019"},{"artist":"Nuvolascura","title":"How This All Ends","label":"Zegema Beach Records","year":"2025"},{"artist":"Page France","title":"\u2026And the Family Telephone","label":"Suicide Squeeze Records","year":""},{"artist":"Pedro the Lion","title":"Phoenix","label":"Polyvinyl","year":"2019"},{"artist":"Psychonaut","title":"Violate Consensus Reality","label":"Pelagic","year":"2022"},{"artist":"PUP","title":"Who Will Look After the Dogs?","label":"RISE","year":"2025"},{"artist":"Radiohead","title":"OK Computer","label":"Capitol","year":"2008"},{"artist":"Radiohead","title":"A Moon-Shaped Pool","label":"XL Recordings","year":"2016"},{"artist":"Red Sparowes","title":"The Fear is Excruciating But Therein Lies the Answer","label":"Sargent House","year":""},{"artist":"Rolo Tomassi","title":"Where Myth Becomes Memory","label":"ENTERTAINMENT ONE","year":"2021"},{"artist":"Rolo Tomassi","title":"Time Will Die and Love Will Bury It","label":"Destination Moon","year":"2024"},{"artist":"Rolo Tomassi","title":"Grievances","label":"","year":""},{"artist":"Rose, Jack","title":"Luck in the Valley","label":"Thrill Jockey","year":"2010"},{"artist":"Shearwater","title":"Jet Plane and Oxbow","label":"Sub Pop","year":"2016"},{"artist":"Sigur Ros","title":"ATTA","label":"","year":"2023"},{"artist":"Sigur Ros","title":"Med Sud ieyrum Vit Spilum Endalaust","label":"XL Recordings","year":"2008"},{"artist":"Sigur Ros","title":"Takk","label":"Krunk","year":"2022"},{"artist":"Sigur Ros","title":"( )","label":"Krunk","year":"2022"},{"artist":"Sigur Ros","title":"Kveikur","label":"Krunk","year":"2023"},{"artist":"65 Days of Static","title":"Music for an Infinite Universe","label":"Hello Games/Laced Records","year":"2016"},{"artist":"Slaves BC","title":"Lo, and I am Burning","label":"The Fear and The Void Recordings","year":""},{"artist":"Senza","title":"Celestial Body","label":"Zegema Beach Records","year":""},{"artist":"Smashing Pumpkins","title":"Mellon Collie and the Infinite Sadness","label":"Virgin","year":"2023"},{"artist":"Smith, Elliott","title":"Kill Rock Stars","label":"Kill Rock Stars","year":""},{"artist":"Sufjan Stevens","title":"Come on feel the Illinoise","label":"Asthmatic Kitty","year":"2005"},{"artist":"Sufjan Stevens","title":"Seven Swans","label":"Sounds Familyre","year":"2004"},{"artist":"Sufjan Stevens","title":"Javelin","label":"Asthmatic Kitty","year":"2023"},{"artist":"Svalbard","title":"When I Die, Will I Get Better?","label":"Translation Loss","year":"2020"},{"artist":"Svalbard","title":"The Weight of the Mask","label":"Nuclear Blast","year":"2023"},{"artist":"State Faults","title":"Children of the Moon","label":"Dog Knights + Deathwish","year":"2025"},{"artist":"Swell Season","title":"Strict Joy","label":"ANTI","year":"2009"},{"artist":"This Will Destroy You","title":"Live in Reykjavik, Iceland","label":"Magic Bullet","year":"2013"},{"artist":"This Will Destroy You","title":"Young Mountain","label":"Magic Bullet","year":"2006"},{"artist":"Thou","title":"May Our Chambers Be Full/The Helm of Sorrow","label":"Sacred Bones","year":"2020"},{"artist":"Thursday/Envy","title":"self-titled","label":"Temporary Residence","year":"2008"},{"artist":"Thursday","title":"Full Collapse","label":"Victory Records","year":"2021"},{"artist":"Tinariwen","title":"Amattsou","label":"Wedge","year":"2023"},{"artist":"Touche Amore","title":"Parting the Sea Between Brightness and Me","label":"Deathwish","year":"2023"},{"artist":"Trampled by Turtles","title":"Life is Good on the Open Road","label":"Banjodad","year":"2018"},{"artist":"Trampled by Turtles","title":"Palomino","label":"Banjodad","year":"2010"},{"artist":"Tune-Yards","title":"WHOKILL","label":"4AD","year":"2011"},{"artist":"Twothirtyeight","title":"Regulate the Chemicals","label":"Recession Records","year":"2010"},{"artist":"Unwed Sailor","title":"The Marionette and the Music Box","label":"Burnt Toast Vinyl / Gentlemen Records","year":""},{"artist":"Unwed Sailor","title":"The Faithful Anchor","label":"Spartan Records","year":"2021"},{"artist":"Van Etten, Sharon","title":"Epic","label":"Ba Da Bing","year":"2010"},{"artist":"Violet Cold","title":"Kosmik","label":"Avante Garde","year":"2019"},{"artist":"Watkins, Sara","title":"Under the Pepper Tree","label":"New West","year":"2021"},{"artist":"ZAO","title":"Where Blood and Fire Bring Rest","label":"Tooth and Nail","year":"2020"},{"artist":"ZAO","title":"Crimson Corridor","label":"Observed/Observer","year":""},{"artist":"ZAO","title":"Liberate Te Ex Enfermis","label":"","year":""},{"artist":"2nd Chapter of Acts","title":"The Roar of Love","label":"Sparrow","year":"1980"},{"artist":"2nd Chapter of Acts","title":"With Footnotes","label":"Myrrh","year":"1974"},{"artist":"Abbott and Costello","title":"Who's on First? Abbott and Costello on Radio","label":"Nostalgia Lane","year":"1977"},{"artist":"AC/DC","title":"For Those About to Rock We Salute You","label":"Atlantic","year":"1981"},{"artist":"AC/DC","title":"Back in Black","label":"Atlantic","year":"1980"},{"artist":"Alabama","title":"An Alabama Christmas","label":"RCA","year":"1985"},{"artist":"Allman Brothers Band, The","title":"Brothers and Sisters","label":"Capricorn","year":"1973"},{"artist":"Allman Brothers Band, The","title":"At Fillmore East","label":"Capricorn","year":"1971"},{"artist":"Allman Brothers Band, The","title":"Eat a Peach","label":"Capricorn","year":"1972"},{"artist":"Architecture in Helsinki","title":"That Beep","label":"Polyvinyl","year":"2009"},{"artist":"Armstrong, Louis","title":"Hello Dolly","label":"MCA Coral","year":"1964"},{"artist":"Armstrong, Louis","title":"Ambassador Satch","label":"Columbia","year":""},{"artist":"Atkins, Chet","title":"Chet Atkins and His Guitar","label":"RCA Camden","year":"1964"},{"artist":"Atkins, Chet","title":"Finger-Style Guitar","label":"RCA Victor","year":"1956"},{"artist":"Atkins, Chet","title":"Chet Atkins Picks the Best","label":"RCA Victor","year":"1967"},{"artist":"Atkins, Chet","title":"Christmas with Chet Atkins","label":"RCA Victor","year":"1961"},{"artist":"Baez, Joan","title":"Blessed Are...","label":"Vanguard","year":"1971"},{"artist":"Baez, Joan","title":"Joan Baez in Concert Volume 2","label":"Vanguard","year":"1963"},{"artist":"Baez, Joan","title":"Joan","label":"Vanguard","year":"1967"},{"artist":"Baez, Joan","title":"Joan Baez in Concert","label":"Vanguard","year":"1962"},{"artist":"Baez, Joan","title":"Joan Baez","label":"Vanguard","year":"1960"},{"artist":"Baez, Joan","title":"Baptism","label":"Vanguard","year":"1968"},{"artist":"Band, The","title":"The Band","label":"Capitol","year":"1969"},{"artist":"Beach Boys, The","title":"The Beach Boys Today","label":"Capitol","year":"1965"},{"artist":"Beach Boys, The","title":"Little Deuce Coupe","label":"Capitol","year":"1963"},{"artist":"Beatles, The","title":"Help!","label":"Capitol","year":"1965"},{"artist":"Beatles, The","title":"Rubber Soul","label":"Capitol","year":"1965"},{"artist":"Beatles, The","title":"The Beatles: 1962-1966","label":"Apple","year":"1973"},{"artist":"Beatles, The","title":"Let it Be","label":"Apple","year":"1970"},{"artist":"Beatles, The","title":"Meet the Beatles","label":"Capitol","year":"1964"},{"artist":"Beatles, The","title":"Abbey Road","label":"Apple","year":"1969"},{"artist":"Beatles, The","title":"Hey Jude","label":"Apple","year":"1970"},{"artist":"Beatles, The","title":"Revolver","label":"Capitol","year":"1966"},{"artist":"BeeGees, The","title":"BeeGees Greatest","label":"RSO","year":"1979"},{"artist":"Blood, Sweat, and Tears","title":"Blood, Sweat, and Tears","label":"Columbia","year":"1969"},{"artist":"Boston","title":"Don't Look Back","label":"Epic","year":"1978"},{"artist":"Boston","title":"Boston","label":"Epic","year":"1976"},{"artist":"Bread","title":"The Best of Bread","label":"Elektra","year":"1973"},{"artist":"Browne, Jackson","title":"Late for the Sky","label":"Asylum","year":"1974"},{"artist":"Browne, Jackson","title":"Running on Empty","label":"Asylum","year":"1977"},{"artist":"Brubeck, Dave","title":"Brubeck Time","label":"Columbia","year":"1955"},{"artist":"Byrds, The","title":"Greatest Hits","label":"Columbia","year":"1967"},{"artist":"Carpenters, The","title":"A Song for You","label":"A&M","year":"1972"},{"artist":"Carpenters, The","title":"The Singles: 1969-1973","label":"A&M","year":"1973"},{"artist":"Cash, Johnny","title":"Live at San Quentin","label":"Columbia","year":"1969"},{"artist":"Cash, Johnny","title":"At Folsom Prison","label":"Columbia","year":"1968"},{"artist":"Cheap Trick","title":"Cheap Trick","label":"Epic","year":"1977"},{"artist":"Chicago","title":"Chicago Transit Authority","label":"Columbia","year":"1969"},{"artist":"Clapton, Eric","title":"History of Eric Clapton","label":"ATCO","year":"1972"},{"artist":"Cohen, Leonard","title":"Songs from a Room","label":"Columbia","year":"1969"},{"artist":"Cole, Nat King","title":"Love is the Thing","label":"Capitol","year":"1957"},{"artist":"Collins, Phil","title":"Face Value","label":"Atlantic","year":"1981"},{"artist":"Coltrane, John","title":"Africa/Brass","label":"Impulse","year":"1961"},{"artist":"Cooke, Sam","title":"Recorded Live at The CopaCabana, New York City","label":"RCA Victor","year":"1964"},{"artist":"Costello, Elvis","title":"This Year's Model","label":"Columbia","year":"1978"},{"artist":"Cream","title":"Fresh Cream","label":"ATCO","year":"1967"},{"artist":"Creedence Clearwater Revival","title":"Chronicle","label":"Fantasy","year":"1976"},{"artist":"Creedence Clearwater Revival","title":"Green River","label":"Fantasy","year":"1969"},{"artist":"Croce, Jim","title":"You Don't Mess Around With Jim","label":"ABC","year":"1972"},{"artist":"Crosby, Stills, Nash, and Young","title":"Deja Vu","label":"Atlantic","year":"1970"},{"artist":"Culture Club","title":"Kissing to be Clever","label":"Epic","year":"1982"},{"artist":"Davis, Miles","title":"On the Corner","label":"Columbia","year":"1972"},{"artist":"Deep Purple","title":"Machinehead","label":"Warner Bros.","year":"1972"},{"artist":"Denver, John","title":"John Denver's Greatest Hits","label":"RCA Victor","year":"1973"},{"artist":"Depeche Mode","title":"Some Great Reward","label":"Mute Records","year":"1984"},{"artist":"Derek and the Dominos","title":"Layla","label":"ATCO","year":"1970"},{"artist":"Dire Straits","title":"Making Movies","label":"Warner Bros.","year":"1980"},{"artist":"Dizzy Gillespie","title":"At Newport","label":"Verve","year":"1958"},{"artist":"Doobie Brothers, The","title":"Minute by Minute","label":"Warner Bros.","year":"1978"},{"artist":"Doors, The","title":"The Doors","label":"Elektra","year":"1967"},{"artist":"Doors, The","title":"Greatest Hits","label":"Elektra","year":"1980"},{"artist":"Dylan, Bob","title":"Bringing it All Back Home","label":"Columbia","year":"1965"},{"artist":"Dylan, Bob","title":"Highway 61 Revisited","label":"Columbia","year":"1965"},{"artist":"Dylan, Bob","title":"Blood on the Tracks","label":"Columbia","year":"1975"},{"artist":"Dylan, Bob","title":"The Freewheelin' Bob Dylan","label":"Columbia","year":"1963"},{"artist":"Eagles, The","title":"One of These Nights","label":"Asylum","year":"1975"},{"artist":"Ellington, Duke","title":"Duke Ellington Meets Coleman Hawkins","label":"Impulse","year":"1963"},{"artist":"Elvis","title":"Elvis' Christmas Album","label":"RCA","year":"1957"},{"artist":"Emerson, Lake, and Palmer","title":"Brain Salad Surgery","label":"Manticore","year":"1973"},{"artist":"Fitzgerald, Ella","title":"Mack the Knife; Ella in Berlin","label":"Verve","year":"1960"},{"artist":"Fleetwood Mac","title":"Rumours","label":"Warner Bros.","year":"1977"},{"artist":"Fleetwood Mac","title":"Tusk","label":"Warner Bros.","year":"1979"},{"artist":"Fogelberg, Dan","title":"Greatest Hits","label":"Full Moon/Epic","year":"1982"},{"artist":"Foreigner","title":"Double Vision","label":"Atlantic","year":"1978"},{"artist":"Franklin, Aretha","title":"Aretha's Gold","label":"Atlantic","year":"1969"},{"artist":"Genesis","title":"abacab","label":"Atlantic","year":"1981"},{"artist":"Genesis","title":"Invisible Touch","label":"Atlantic","year":"1986"},{"artist":"Goodman, Benny","title":"The Complete Benny Goodman, Vol. III: 1936","label":"Bluebird","year":"1976"},{"artist":"Grateful Dead, The","title":"Terrapin Station","label":"Arista","year":"1977"},{"artist":"Guthrie, Arlo","title":"The Best of Arlo Guthrie","label":"Warner Bros.","year":"1977"},{"artist":"Hancock, Herbie","title":"Headhunters","label":"Columbia","year":"1973"},{"artist":"Harris, Emmylou","title":"Roses in the Snow","label":"Warner Bros","year":"1980"},{"artist":"Harrison, George","title":"All Things Must Pass","label":"Apple","year":"1970"},{"artist":"Hendrix, Jimi","title":"Are You Experienced","label":"Reprise","year":"1967"},{"artist":"Hendrix, Jimi","title":"Smash Hits","label":"Reprise","year":"1969"},{"artist":"Holiday, Billie","title":"Rare Live Recording","label":"RIC","year":"1964"},{"artist":"Ian, Janis","title":"Present Company","label":"Capitol","year":"1971"},{"artist":"Iron Butterfly","title":"IN-A-GADDA-DA-VIDA","label":"ATCO","year":"1968"},{"artist":"Isley Brothers","title":"3+3","label":"CBS","year":"1973"},{"artist":"Jackson, Janet","title":"Control","label":"A&M","year":"1986"},{"artist":"Jackson, Michael","title":"Thriller","label":"Epic","year":"1982"},{"artist":"Jarrett, Keith","title":"The Köln Concert","label":"ECM","year":"1975"},{"artist":"Jefferson Starship","title":"Freedom at Point Zero","label":"Grunt","year":"1979"},{"artist":"Jennings, Waylon","title":"Greatest Hits","label":"RCA","year":"1979"},{"artist":"Joel, Billy","title":"Piano Man","label":"Columbia","year":"1973"},{"artist":"Joel, Billy","title":"The Stranger","label":"Columbia","year":"1977"},{"artist":"Joel, Billy","title":"Glass Houses","label":"Columbia","year":"1980"},{"artist":"John, Elton","title":"Greatest Hits","label":"MCA","year":"1974"},{"artist":"John, Elton","title":"Goodbye Yellow Brick Road","label":"MCA","year":"1973"},{"artist":"John, Elton","title":"Captain Fantastic and the Brown Dirt Cowboy","label":"MCA","year":"1975"},{"artist":"Johnson, Robert","title":"King of the Blues Singers, Volume II","label":"Columbia","year":"1970"},{"artist":"Joplin, Janis","title":"Janis Joplin's Greatest Hits","label":"Columbia","year":"1973"},{"artist":"Judas Priest","title":"Priest...Live!","label":"Columbia","year":"1987"},{"artist":"Kansas","title":"Leftoverture","label":"Kirshner","year":"1976"},{"artist":"Kansas","title":"Point of Know Return","label":"Kirshner","year":"1977"},{"artist":"King, B.B.","title":"Live at the Regal","label":"ABC","year":"1971"},{"artist":"King, Carole","title":"Tapestry","label":"ODE","year":"1971"},{"artist":"Led Zeppelin","title":"Houses of the Holy","label":"Atlantic","year":"1973"},{"artist":"Led Zeppelin","title":"Led Zeppelin IV","label":"Atlantic","year":"1971"},{"artist":"Led Zeppelin","title":"Physical Graffiti","label":"Swan Song","year":"1975"},{"artist":"Led Zeppelin","title":"Led Zeppelin","label":"Atlantic","year":"1969"},{"artist":"Lightfoot, Gordon","title":"Sundown","label":"Reprise","year":"1974"},{"artist":"Mamas and the Papas, The","title":"If You Can Believe Your Eyes and Ears","label":"Dunhill","year":"1966"},{"artist":"Mancini, Henry","title":"This is Henry Mancini, Vol. 2","label":"RCA","year":"1972"},{"artist":"McLean, Don","title":"American Pie","label":"United Artists","year":"1971"},{"artist":"Mitchell, Joni","title":"Court and Spark","label":"Asylum","year":"1974"},{"artist":"Mitchell, Joni","title":"Clouds","label":"Reprise","year":"1969"},{"artist":"Moody Blues, The","title":"Every Good Boy Deserves Favour","label":"Threshold","year":"1971"},{"artist":"Nelson, Willie","title":"Stardust","label":"Columbia","year":"1978"},{"artist":"Nirvana","title":"From the Banks of the Muddy Wishkah","label":"Geffen","year":"1996"},{"artist":"Peter Paul and Mary","title":"Peter Paul and Mary","label":"Warner Bros","year":"1962"},{"artist":"Petty, Tom and the Heartbreakers","title":"Long After Dark","label":"Backstreet","year":"1982"},{"artist":"Pink Floyd","title":"Wish You Were Here","label":"Columbia","year":"1975"},{"artist":"Pink Floyd","title":"Dark Side of the Moon","label":"Harvest","year":"1973"},{"artist":"Pink Floyd","title":"The Wall","label":"Columbia","year":"1979"},{"artist":"Pink Floyd","title":"Meddle","label":"Harvest","year":"1971"},{"artist":"Police, The","title":"Synchronicity","label":"A&M","year":"1983"},{"artist":"Police, The","title":"Zenyatta Mondatta","label":"A&M","year":"1980"},{"artist":"Presley, Elvis","title":"G.I. Blues","label":"RCA Victor","year":"1960"},{"artist":"Queen","title":"A Night at the Opera","label":"Elektra","year":"1975"},{"artist":"Queen","title":"Jazz","label":"Elektra","year":"1978"},{"artist":"Raitt, Bonnie","title":"Bonnie Raitt","label":"Warner Bros.","year":"1971"},{"artist":"R.E.M.","title":"Document","label":"IRS","year":"1987"},{"artist":"R.E.M.","title":"Green","label":"Warner Bros.","year":"1988"},{"artist":"R.E.M.","title":"Reckoning","label":"IRS","year":"1984"},{"artist":"Rolling Stones, The","title":"Sticky Fingers","label":"Rolling Stones Records","year":"1971"},{"artist":"Rolling Stones, The","title":"Goats Head Soup","label":"Rolling Stones Records","year":"1973"},{"artist":"Russian Circles","title":"Gnosis","label":"Sargent House","year":"2022"},{"artist":"Seeger, Pete","title":"American Favorite Ballads","label":"Folkways","year":"1961"},{"artist":"Simon and Garfunkel","title":"Bridge Over Troubled Water","label":"Columbia","year":"1970"},{"artist":"Simon and Garfunkel","title":"Sounds of Silence","label":"Columbia","year":"1966"},{"artist":"Simon and Garfunkel","title":"Greatest Hits","label":"Columbia","year":"1972"},{"artist":"Simon, Paul","title":"Still Crazy After All These Years","label":"Columbia","year":"1975"},{"artist":"Sinatra, Frank","title":"Strangers in the Night","label":"Reprise","year":"1966"},{"artist":"Sinatra, Frank","title":"A Man and His Music","label":"Reprise","year":"1965"},{"artist":"Sinatra, Frank","title":"Only the Lonely","label":"Capitol","year":"1958"},{"artist":"Sly and the Family Stone","title":"Fresh","label":"Epic","year":"1973"},{"artist":"Soundtrack","title":"Grease","label":"RSO","year":"1978"},{"artist":"Soundtrack","title":"Saturday Night Fever","label":"RSO","year":"1977"},{"artist":"Springsteen, Bruce","title":"Born to Run","label":"Columbia","year":"1975"},{"artist":"Springsteen, Bruce","title":"The River","label":"Columbia","year":"1980"},{"artist":"Stevens, Cat","title":"Teaser and the Firecat","label":"A&M","year":"1971"},{"artist":"Stevens, Cat","title":"Cat Stevens' Greatest Hits","label":"A&M","year":"1975"},{"artist":"Stewart, Rod","title":"Every Picture Tells a Story","label":"Mercury","year":"1971"},{"artist":"Styx","title":"The Grand Illusion","label":"A&M","year":"1977"},{"artist":"Talking Heads, The","title":"Stop Making Sense","label":"Sire","year":"1984"},{"artist":"Taylor, James","title":"Sweet Baby James","label":"Warner Bros.","year":"1970"},{"artist":"Taylor, James","title":"James Taylor's Greatest Hits","label":"Warner Bros.","year":"1976"},{"artist":"Tull, Jethro","title":"Aqualung","label":"Chrysalis","year":"1971"},{"artist":"U2","title":"Joshua Tree","label":"Island","year":"1987"},{"artist":"U2","title":"The Unforgettable Fire","label":"Island","year":"1984"},{"artist":"Van Morrison","title":"Tupelo Honey","label":"Warner Bros.","year":"1971"},{"artist":"Van Morrison","title":"Moondance","label":"Warner Bros.","year":"1970"},{"artist":"Who, The","title":"Who's Next","label":"Decca","year":"1971"},{"artist":"Who, The","title":"Quadrophenia","label":"MCA","year":"1973"},{"artist":"Wonder, Stevie","title":"Songs in the Key of Life","label":"Tamla","year":"1976"},{"artist":"Wonder, Stevie","title":"Talking Book","label":"Tamla","year":"1972"},{"artist":"Young, Neil","title":"Harvest","label":"Reprise","year":"1972"},{"artist":"Young, Neil","title":"Rust Never Sleeps","label":"Reprise","year":"1979"},{"artist":"Young, Neil","title":"On the Beach","label":"Reprise","year":"1974"}];
+
+const LABEL_COLORS = ['#8B1A1A','#1A3A8B','#1A6B3A','#6B3A1A','#4A1A6B','#7A3A1A','#1A5A7A','#6B1A5A','#2A6B1A','#4A4A1A'];
+let currentRecord = null, isPlaying = false, vuTimer = null;
+let filtered = [...RECORDS];
+
+function getLabelColor(artist) {
+  let h = 0;
+  for (let c of (artist||'')) h = (h * 31 + c.charCodeAt(0)) | 0;
+  return LABEL_COLORS[Math.abs(h) % LABEL_COLORS.length];
+}
+
+function filterRecords() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const s = document.getElementById('sortSel').value;
+  filtered = RECORDS.filter(r => r.artist.toLowerCase().includes(q) || r.title.toLowerCase().includes(q));
+  if (s === 'artist') filtered.sort((a,b) => a.artist.localeCompare(b.artist));
+  else if (s === 'title') filtered.sort((a,b) => a.title.localeCompare(b.title));
+  else filtered.sort((a,b) => (a.year||'0').localeCompare(b.year||'0'));
+  renderList();
+  document.getElementById('recCount').textContent = filtered.length + ' records';
+}
+
+function renderList() {
+  const list = document.getElementById('recordList');
+  list.innerHTML = filtered.map(r => {
+    const idx = RECORDS.indexOf(r);
+    const active = r === currentRecord ? ' active' : '';
+    return `<div class="rrow${active}" onclick="selectRecord(${idx})">
+      <div class="rrow-info">
+        <div class="rrow-title">${r.title}</div>
+        <div class="rrow-artist">${r.artist}</div>
+      </div>
+      <div class="rrow-year">${r.year||'—'}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectRecord(idx) {
+  currentRecord = RECORDS[idx];
+  const col = getLabelColor(currentRecord.artist);
+  document.getElementById('recordLabel').style.background = col;
+  const st = currentRecord.title.length > 22 ? currentRecord.title.slice(0,20)+'…' : currentRecord.title;
+  const sa = currentRecord.artist.length > 18 ? currentRecord.artist.slice(0,16)+'…' : currentRecord.artist;
+  document.getElementById('labelTitle').textContent = st;
+  document.getElementById('labelArtist').textContent = sa;
+  document.getElementById('npTitle').textContent = currentRecord.title;
+  document.getElementById('npArtist').textContent = currentRecord.artist;
+  document.getElementById('npMeta').textContent = [currentRecord.label, currentRecord.year].filter(Boolean).join(' · ');
+  document.getElementById('tickerText').textContent =
+    'NOW SPINNING: ' + currentRecord.artist.toUpperCase() + ' — ' + currentRecord.title.toUpperCase() +
+    (currentRecord.year ? ' · ' + currentRecord.year : '') +
+    (currentRecord.label ? ' · ' + currentRecord.label.toUpperCase() : '') +
+    ' · VINYLVAULT · ';
+  if (!isPlaying) startPlaying();
+  renderList();
+}
+
+function startPlaying() {
+  isPlaying = true;
+  document.getElementById('record').classList.add('spinning');
+  document.getElementById('tonearm').classList.add('playing');
+  document.getElementById('btnPlay').textContent = '⏹ Stop';
+  document.getElementById('btnPlay').classList.add('down');
+  document.getElementById('npLed').classList.add('on');
+  animateVU();
+}
+
+function stopPlaying() {
+  isPlaying = false;
+  clearTimeout(vuTimer);
+  document.getElementById('record').classList.remove('spinning');
+  document.getElementById('tonearm').classList.remove('playing');
+  document.getElementById('btnPlay').textContent = '▶ Play';
+  document.getElementById('btnPlay').classList.remove('down');
+  document.getElementById('npLed').classList.remove('on');
+  document.querySelectorAll('.vu-b').forEach(b => b.style.height = '3px');
+}
+
+function togglePlay() {
+  if (!currentRecord) return;
+  isPlaying ? stopPlaying() : startPlaying();
+}
+
+function animateVU() {
+  if (!isPlaying) return;
+  const bars = document.querySelectorAll('.vu-b');
+  const hs = [5,10,18,8,22,12,20,7,16,4,24,11,14,9];
+  bars.forEach(b => {
+    const h = hs[Math.floor(Math.random()*hs.length)];
+    b.style.height = h + 'px';
+    b.style.background = h > 16 ? '#c8962a' : h > 10 ? '#a07020' : '#7a5010';
+  });
+  vuTimer = setTimeout(animateVU, 110);
+}
+
+function shuffleRecord() {
+  const btn = document.getElementById('btnShuffle');
+  btn.classList.remove('spin-once');
+  void btn.offsetWidth;
+  btn.classList.add('spin-once');
+  btn.addEventListener('animationend', () => btn.classList.remove('spin-once'), { once: true });
+  const idx = Math.floor(Math.random() * RECORDS.length);
+  selectRecord(idx);
+  const list = document.getElementById('recordList');
+  const activeRow = list.querySelector('.rrow.active');
+  if (activeRow) activeRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function openTidal() {
+  if (!currentRecord) { alert('Select a record first!'); return; }
+  const q = encodeURIComponent(currentRecord.artist + ' ' + currentRecord.title);
+  const url = 'https://tidal.com/browse/search/' + q;
+  const btn = document.getElementById('btnTidal');
+  btn.classList.add('down');
+  setTimeout(() => btn.classList.remove('down'), 200);
+  window.open(url, '_blank');
+}
+
+filterRecords();
+</script>
+</body>
+</html>
